@@ -1,0 +1,75 @@
+body {
+  font-family: Arial, sans-serif;
+}
+
+button {
+  transition: 0.3s;
+}
+
+button:hover {
+  transform: scale(1.05);
+}
+
+<button class="done text-green-600 hover:text-green-800">
+  ✔ Done
+</button>
+
+<button class="delete text-red-500 hover:text-red-700">
+  ✖ Delete
+</button>
+
+/* Smooth hover effect */
+button {
+  transition: 0.3s;
+}
+
+/* Filter buttons */
+.filter-btn {
+  background: #e5e7eb;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.filter-btn:hover {
+  background: #d1d5db;
+}
+
+/* Completed task style */
+.completed {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+body.dark {
+  background: #111827;
+  color: white;
+}
+div {
+  transition: all 0.3s ease;
+}
+
+/* Fade-in animation */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+button {
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  transform: scale(1.05);
+}
+div:hover {
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}

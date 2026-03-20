@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Task Manager</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-gray-100 transition duration-300">
+
+  <div id="loader" class="fixed inset-0 flex items-center justify-center bg-white z-50">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500"></div>
+  </div>
+
+  <header class="bg-blue-600 text-white text-center p-4 text-2xl font-bold relative">
+    Student Task Manager
+    <button id="toggleDark" class="absolute right-5 top-4 bg-white text-black px-3 py-1 rounded">
+      <i class="fa-solid fa-moon"></i>
+    </button>
+  </header>
+
+  <div class="max-w-lg mx-auto bg-white p-6 mt-6 rounded-lg shadow">
+    <input id="title" type="text" placeholder="Enter task title..."
+      class="w-full p-2 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+    <textarea id="desc" placeholder="Enter task description..."
+      class="w-full p-2 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+
+    <button id="addTask"
+      class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+      Add Task
+    </button>
+  </div>
+
+  <div class="max-w-4xl mx-auto mt-4 flex justify-center gap-4">
+    <button onclick="filterTasks('all', this)" class="filter-btn px-3 py-1 bg-gray-200 rounded">All</button>
+    <button onclick="filterTasks('completed', this)" class="filter-btn px-3 py-1 bg-gray-200 rounded">Completed</button>
+    <button onclick="filterTasks('pending', this)" class="filter-btn px-3 py-1 bg-gray-200 rounded">Pending</button>
+  </div>
+
+  <div id="taskList" class="max-w-4xl mx-auto mt-6 grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+
+  <p id="emptyMsg" class="text-center text-gray-500 mt-4">
+    No tasks added
+  </p>
+
+  <script src="script.js"></script>
+
+</body>
+</html>
