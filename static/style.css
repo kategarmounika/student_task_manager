@@ -1,3 +1,21 @@
+<style>
+.sidebar-icon {
+  padding: 10px;
+  border-radius: 10px;
+  transition: 0.3s;
+}
+
+.sidebar-icon:hover {
+  background: rgba(255,255,255,0.2);
+  transform: scale(1.1);
+}
+
+.active {
+  background: white;
+  color: #6b21a8;
+}
+</style>
+
 body {
   font-family: Arial, sans-serif;
 }
@@ -72,4 +90,26 @@ button:hover {
 }
 div:hover {
   box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+body.dark {
+  background-color: #1f2937;
+  color: white;
+}
+
+body.dark .bg-white {
+  background-color: #374151;
+}
+
+body.dark .text-black {
+  color: white;
+}
+
+body.dark {
+  background-color: #1f2937;
+  color: white;
+}
+
+body.dark .bg-white {
+  background-color: #374151;
 }

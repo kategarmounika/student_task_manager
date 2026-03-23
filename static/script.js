@@ -119,15 +119,36 @@ function displayTask(taskObj) {
 function updateStorage() {
   const tasks = [];
 
-  document.querySelectorAll("#taskList > div").forEach(task => {
-    const title = task.querySelector("h3").childNodes[0].textContent.trim();
-    const desc = task.querySelector("p").innerText;
-    const completed = task.classList.contains("completed");
+  document.addEventListener("DOMContentLoaded", () => {
+    const toggleBtn = document.getElementById("toggleDark");
 
-    tasks.push({ title, desc, completed });
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", () => {
+        document.body.classList.toggle("dark");
+      });
+    }
   });
 
   localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+function filterTasks(status) {
+  let tasks = document.querySelectorAll(".task-card");
+
+  tasks.forEach(task => {
+    if (status === "all") {
+      task.style.display = "block";
+    } else {
+      task.style.display = task.innerText.includes(status) ? "block" : "none";
+    }
+  });
+
+  // highlight active button
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.classList.remove("ring-2", "ring-purple-500");
+  });
+
+  event.target.classList.add("ring-2", "ring-purple-500");
 }
 
 function deleteTask(taskObj) {
@@ -139,22 +160,28 @@ function deleteTask(taskObj) {
 }
 
 function filterTasks(type, btn) {
+  const tasks = document.querySelectorAll("#taskList > div");
+
+  // Highlight active button
   document.querySelectorAll(".filter-btn").forEach(b => {
     b.classList.remove("bg-blue-500", "text-white");
   });
 
   btn.classList.add("bg-blue-500", "text-white");
 
-  let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-  taskList.innerHTML = "";
+  tasks.forEach(task => {
+    const status = task.querySelector("span").innerText.toLowerCase();
 
-  if (type === "completed") {
-    tasks = tasks.filter(t => t.completed);
-  } else if (type === "pending") {
-    tasks = tasks.filter(t => !t.completed);
-  }
-
-  tasks.forEach(displayTask);
+    if (type === "all") {
+      task.style.display = "block";
+    } else if (type === "completed" && status.includes("completed")) {
+      task.style.display = "block";
+    } else if (type === "pending" && status.includes("pending")) {
+      task.style.display = "block";
+    } else {
+      task.style.display = "none";
+    }
+  });
 }
 
 toggleBtn.addEventListener("click", () => {

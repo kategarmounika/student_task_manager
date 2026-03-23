@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Register</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      background: linear-gradient(to right, #4e73df, #8e44ad);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      background: #f5f5f5;
+      padding: 30px;
+      border-radius: 15px;
+      width: 400px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .input {
+      width: 100%;
+      border: none;
+      border-bottom: 2px solid #999;
+      background: transparent;
+      padding: 8px 0;
+      margin-bottom: 25px;
+      outline: none;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 30px;
+      border: 2px solid black;
+      background: white;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    .btn:hover {
+      background: black;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <h2 class="text-3xl text-center font-bold mb-6">Register</h2>
+
+  <form action="/register" method="POST">
+
+    <input type="text" name="username" placeholder="Name" class="input">
+
+    <input type="email" name="email" placeholder="Email" class="input">
+
+    <input type="password" name="password" placeholder="Password" class="input">
+
+    <input type="password" name="confirm" placeholder="Confirm Password" class="input">
+
+    <button class="btn">Sign Up</button>
+
+  </form>
+
+  <p class="text-center mt-4">
+    Have an Account ?
+    <a href="/login_page" class="text-blue-500">Login Here</a>
+  </p>
+
+  {% if error %}
+  <p class="text-red-500 text-center mt-2">{{ error }}</p>
+  {% endif %}
+
+</div>
+
+</body>
+</html>

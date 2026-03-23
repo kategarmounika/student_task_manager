@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      background-color: #0a0a0a;
+    }
+
+    .glow {
+      box-shadow: 0 0 20px #facc15;
+    }
+  </style>
+</head>
+
+<body class="text-white">
+
+<!-- Navbar -->
+<div class="flex justify-between items-center p-4 border-b border-yellow-400">
+  
+
+  <div class="space-x-4">
+    <a href="/login_page" class="hover:text-yellow-400">Login</a>
+    <a href="/register" class="hover:text-yellow-400">Register</a>
+  </div>
+</div>
+
+<!-- Login Box -->
+<div class="flex items-center justify-center h-screen">
+
+  <div class="bg-gray-900 p-8 rounded-xl w-96 glow border border-yellow-400">
+
+    <h2 class="text-yellow-400 text-2xl text-center mb-6 font-bold">
+      Welcome Back
+    </h2>
+
+    <form action="/login" method="POST">
+
+      <label>Email</label>
+      <input type="text" name="username"
+        class="w-full p-2 mb-4 bg-black border border-yellow-400 rounded outline-none">
+
+      <label>Password</label>
+      <input type="password" name="password"
+        class="w-full p-2 mb-4 bg-black border border-yellow-400 rounded outline-none">
+
+      <div class="flex items-center mb-4">
+        <input type="checkbox" class="mr-2">
+        <span class="text-sm">Remember Me</span>
+      </div>
+
+      <button class="bg-yellow-400 text-black w-full py-2 rounded font-bold">
+        Login
+      </button>
+
+    </form>
+
+    <p class="text-center mt-4 text-yellow-400 cursor-pointer">
+      Forgot Password?
+    </p>
+
+    <p class="text-center mt-2">
+      Don't have an account?
+      <a href="/register" class="text-yellow-400">Register</a>
+    </p>
+
+    {% if error %}
+    <p class="text-red-500 text-center mt-3">{{ error }}</p>
+    {% endif %}
+
+  </div>
+
+</div>
+
+</body>
+</html>
