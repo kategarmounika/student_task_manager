@@ -113,3 +113,9 @@ body.dark {
 body.dark .bg-white {
   background-color: #374151;
 }
+
+<style>
+  body {
+    background: linear-gradient(to right, #eef2ff, #f8fafc);
+  }
+</style>

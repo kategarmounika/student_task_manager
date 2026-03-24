@@ -1,25 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <title>Edit Task</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body class="bg-gray-100 flex items-center justify-center h-screen">
 
-<div class="bg-white p-6 rounded shadow w-96">
-  <h2 class="text-xl mb-4">Edit Task</h2>
+<div class="bg-white p-8 rounded-xl shadow w-96">
+
+  <h2 class="text-xl font-bold mb-6 text-center">Edit Task</h2>
 
   <form method="POST">
-    <input type="text" name="title" value="{{ task.title }}"
-      class="border p-2 w-full mb-3">
 
-    <textarea name="desc"
-      class="border p-2 w-full mb-3">{{ task.description }}</textarea>
+    <input name="title" value="{{ task.title }}"
+      class="w-full p-2 mb-3 border rounded" required>
 
-    <button class="bg-blue-500 text-white px-4 py-2 w-full">
-      Update
+    <input name="desc" value="{{ task.description }}"
+      class="w-full p-2 mb-3 border rounded" required>
+
+    <input type="date" name="due_date"
+      value="{{ task.due_date }}"
+      class="w-full p-2 mb-4 border rounded">
+
+    <button class="bg-purple-600 text-white w-full py-2 rounded">
+      Update Task
     </button>
+
   </form>
+
+  <a href="/dashboard" class="block text-center mt-4 text-gray-500">
+    ← Back to Dashboard
+  </a>
+
 </div>
 
 </body>

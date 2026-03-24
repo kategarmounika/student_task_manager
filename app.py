@@ -1,201 +1,267 @@
-import matplotlib
-matplotlib.use('Agg')
-
-import matplotlib.pyplot as plt
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, flash
+from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
-import matplotlib.pyplot as plt
-import io
-import base64
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
-import io
-from flask import send_file
+from datetime import date
 
 app = Flask(__name__)
 app.secret_key = "secret123"
 
-# Database connection
+# ---------------- DATABASE ----------------
 def get_db():
     conn = sqlite3.connect("database.db")
     conn.row_factory = sqlite3.Row
     return conn
 
-# ---------------- LOGIN PAGE ----------------
-@app.route("/login_page")
-def login_page():
-    return render_template("login.html")
+def init_db():
+    conn = get_db()
 
-# ---------------- REGISTER ----------------
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        username = request.form.get("username")
-        email = request.form.get("email")
-        password = request.form.get("password")
-        confirm = request.form.get("confirm")
-
-        if password != confirm:
-            return render_template("register.html", error="Passwords do not match")
-
-        conn = get_db()
-        conn.execute(
-            "INSERT INTO users (username, password) VALUES (?, ?)",
-            (username, password)
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            email TEXT UNIQUE,
+            password TEXT
         )
-        conn.commit()
-        conn.close()
+    ''')
 
-        return redirect("/login_page")
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            description TEXT,
+            status TEXT DEFAULT 'Pending',
+            due_date TEXT,
+            user_id INTEGER
+        )
+    ''')
 
-    return render_template("register.html")
-
-# ---------------- LOGIN ----------------
-@app.route("/login", methods=["POST"])
-def login():
-    # ✅ Correct field names (must match HTML)
-    username = request.form.get("username")
-    password = request.form.get("password")
-
-    print("Entered:", username, password)
-
-    conn = get_db()
-    user = conn.execute(
-        "SELECT * FROM users WHERE username=? AND password=?",
-        (username, password)
-    ).fetchone()
-    conn.close()
-
-    print("Database result:", user)
-
-    if user:
-        session["user"] = username
-        return redirect("/")
-    else:
-        return render_template("login.html", error="Invalid Login")
-
-# ---------------- LOGOUT ----------------
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/login_page")
-
-# ---------------- DASHBOARD ----------------
-@app.route("/")
-def dashboard():
-    if "user" not in session:
-        return redirect("/login_page")
-
-    conn = get_db()
-    tasks = conn.execute("SELECT * FROM tasks").fetchall()
-    conn.close()
-
-    return render_template("dashboard.html", tasks=tasks)
-
-# ---------------- ADD TASK ----------------
-@app.route("/add", methods=["POST"])
-def add_task():
-    title = request.form.get("title")
-    desc = request.form.get("desc")
-
-    conn = get_db()
-    conn.execute(
-        "INSERT INTO tasks (title, description, status) VALUES (?, ?, ?)",
-        (title, desc, "Pending")
-    )
     conn.commit()
     conn.close()
 
-    return redirect("/")
+init_db()
 
-@app.route("/edit/<int:id>", methods=["GET", "POST"])
-def edit_task(id):
-    conn = get_db()
+# ---------------- HOME ----------------
+@app.route('/')
+def home():
+    return redirect('/login')
 
-    if request.method == "POST":
-        title = request.form.get("title")
-        desc = request.form.get("desc")
+# ---------------- REGISTER ----------------
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        conn = get_db()
 
-        conn.execute(
-            "UPDATE tasks SET title=?, description=? WHERE id=?",
-            (title, desc, id)
-        )
-        conn.commit()
+        try:
+            conn.execute(
+                "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+                (
+                    request.form['name'],
+                    request.form['email'],
+                    generate_password_hash(request.form['password'])
+                )
+            )
+            conn.commit()
+            flash("Registered successfully!")
+            return redirect('/login')
+
+        except sqlite3.IntegrityError:
+            flash("Email already exists!")
+
+        finally:
+            conn.close()
+
+    return render_template('register.html')
+
+# ---------------- LOGIN ----------------
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        conn = get_db()
+
+        user = conn.execute(
+            "SELECT * FROM users WHERE email=?",
+            (request.form['email'],)
+        ).fetchone()
+
         conn.close()
 
-        return redirect("/")
+        if user and check_password_hash(user['password'], request.form['password']):
+            session['user_id'] = user['id']
+            session['user_name'] = user['name']
+            flash("Login successful!")
+            return redirect('/dashboard')
 
-    task = conn.execute("SELECT * FROM tasks WHERE id=?", (id,)).fetchone()
+        flash("Invalid credentials")
+
+    return render_template('login.html')
+
+# ---------------- DASHBOARD ----------------
+@app.route('/dashboard')
+def dashboard():
+    if 'user_id' not in session:
+        return redirect('/login')
+
+    conn = get_db()
+    user_id = session['user_id']
+
+    search = request.args.get("search")
+    filter_status = request.args.get("filter")
+    sort = request.args.get("sort")
+
+    query = "SELECT * FROM tasks WHERE user_id=?"
+    params = [user_id]
+
+    if search:
+        query += " AND title LIKE ?"
+        params.append(f"%{search}%")
+
+    if filter_status == "completed":
+        query += " AND status='Completed'"
+    elif filter_status == "pending":
+        query += " AND status='Pending'"
+
+    if sort == "latest":
+        query += " ORDER BY id DESC"
+    elif sort == "oldest":
+        query += " ORDER BY id ASC"
+    elif sort == "due":
+        query += " ORDER BY due_date ASC"
+
+    tasks = conn.execute(query, tuple(params)).fetchall()
     conn.close()
 
-    return render_template("edit.html", task=task)    
+    total = len(tasks)
+    completed = len([t for t in tasks if t['status'] == 'Completed'])
+    pending = len([t for t in tasks if t['status'] == 'Pending'])
 
-# ---------------- COMPLETE ----------------
-@app.route("/complete/<int:id>")
-def complete_task(id):
+    percent = int((completed / total) * 100) if total > 0 else 0
+
+    # Notifications
+    today = str(date.today())
+    due_today = [
+        t for t in tasks
+        if t['due_date'] == today and t['status'] == "Pending"
+    ]
+
+    return render_template(
+        'dashboard.html',
+        tasks=tasks,
+        total=total,
+        completed=completed,
+        pending=pending,
+        percent=percent,
+        due_today=due_today,
+        user_name=session.get('user_name')
+    )
+
+# ---------------- TOGGLE STATUS ----------------
+@app.route('/toggle/<int:id>')
+def toggle(id):
     conn = get_db()
 
-    task = conn.execute("SELECT status FROM tasks WHERE id=?", (id,)).fetchone()
+    task = conn.execute(
+        "SELECT status FROM tasks WHERE id=?",
+        (id,)
+    ).fetchone()
 
-    if task["status"] == "Pending":
-        new_status = "Completed"
-    else:
-        new_status = "Pending"
+    new_status = "Completed" if task['status'] == "Pending" else "Pending"
 
     conn.execute(
         "UPDATE tasks SET status=? WHERE id=?",
         (new_status, id)
     )
+
     conn.commit()
     conn.close()
 
-    return redirect("/")
+    return redirect('/dashboard')
 
-@app.route("/graph")
-def graph():
+# ---------------- ADD TASK ----------------
+@app.route('/add', methods=['POST'])
+def add_task():
     conn = get_db()
-    tasks = conn.execute("SELECT status FROM tasks").fetchall()
+
+    conn.execute(
+        "INSERT INTO tasks (title, description, status, due_date, user_id) VALUES (?, ?, ?, ?, ?)",
+        (
+            request.form['title'],
+            request.form['desc'],
+            'Pending',
+            request.form['due_date'],
+            session['user_id']
+        )
+    )
+
+    conn.commit()
     conn.close()
 
-    completed = sum(1 for t in tasks if t["status"] == "Completed")
-    pending = sum(1 for t in tasks if t["status"] == "Pending")
+    flash("Task added!")
+    return redirect('/dashboard')
 
-    labels = ["Completed", "Pending"]
-    values = [completed, pending]
+# ---------------- EDIT ----------------
+@app.route('/edit/<int:id>', methods=['GET', 'POST'])
+def edit(id):
+    conn = get_db()
 
-    plt.figure()
-    plt.pie(values, labels=labels, autopct='%1.1f%%')
+    if request.method == 'POST':
+        conn.execute(
+            "UPDATE tasks SET title=?, description=?, due_date=? WHERE id=?",
+            (
+                request.form['title'],
+                request.form['desc'],
+                request.form['due_date'],
+                id
+            )
+        )
+        conn.commit()
+        conn.close()
+        return redirect('/dashboard')
 
-    img = io.BytesIO()
-    plt.savefig(img, format='png')
-    img.seek(0)
+    task = conn.execute(
+        "SELECT * FROM tasks WHERE id=?",
+        (id,)
+    ).fetchone()
 
-    graph_url = base64.b64encode(img.getvalue()).decode()
+    conn.close()
 
-    return render_template("graph.html", graph_url=graph_url)
-
-@app.route("/download_pdf")
-def download_pdf():
-    from reportlab.platypus import SimpleDocTemplate, Paragraph
-
-    doc = SimpleDocTemplate("report.pdf")
-    elements = []
-
-    for task in tasks:
-        elements.append(Paragraph(f"{task['title']} - {task['status']}", None))
-
-    doc.build(elements)
-    return send_file("report.pdf", as_attachment=True)  
-
+    return render_template('edit.html', task=task)
 
 # ---------------- DELETE ----------------
-@app.route("/delete/<int:id>")
+@app.route('/delete/<int:id>', methods=['POST'])
 def delete_task(id):
     conn = get_db()
+
     conn.execute("DELETE FROM tasks WHERE id=?", (id,))
+    
     conn.commit()
     conn.close()
-    return redirect("/")
 
+    return redirect('/dashboard')
+
+# ---------------- CALENDAR ----------------
+@app.route('/calendar')
+def calendar():
+    if 'user_id' not in session:
+        return redirect('/login')
+
+    conn = get_db()
+
+    tasks = conn.execute(
+        "SELECT * FROM tasks WHERE user_id=?",
+        (session['user_id'],)
+    ).fetchall()
+
+    conn.close()
+
+    return render_template('calendar.html', tasks=tasks)
+
+# ---------------- LOGOUT ----------------
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash("Logged out!")
+    return redirect('/login')
+
+# ---------------- RUN ----------------
 if __name__ == "__main__":
     app.run(debug=True)

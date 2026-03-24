@@ -19,10 +19,8 @@
 
 <!-- Navbar -->
 <div class="flex justify-between items-center p-4 border-b border-yellow-400">
-  
-
   <div class="space-x-4">
-    <a href="/login_page" class="hover:text-yellow-400">Login</a>
+    <a href="/login" class="hover:text-yellow-400">Login</a>
     <a href="/register" class="hover:text-yellow-400">Register</a>
   </div>
 </div>
@@ -36,14 +34,15 @@
       Welcome Back
     </h2>
 
+    <!-- ✅ SINGLE CORRECT FORM -->
     <form action="/login" method="POST">
 
       <label>Email</label>
-      <input type="text" name="username"
+      <input type="email" name="email" required
         class="w-full p-2 mb-4 bg-black border border-yellow-400 rounded outline-none">
 
       <label>Password</label>
-      <input type="password" name="password"
+      <input type="password" name="password" required
         class="w-full p-2 mb-4 bg-black border border-yellow-400 rounded outline-none">
 
       <div class="flex items-center mb-4">
@@ -51,7 +50,8 @@
         <span class="text-sm">Remember Me</span>
       </div>
 
-      <button class="bg-yellow-400 text-black w-full py-2 rounded font-bold">
+      <button type="submit"
+        class="bg-yellow-400 text-black w-full py-2 rounded font-bold">
         Login
       </button>
 
