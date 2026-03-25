@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -8,250 +9,210 @@
 
 <body class="bg-gray-100">
 
-<div class="flex flex-col md:flex-row">
+<div class="flex">
 
-<!-- Sidebar -->
-<div class="hidden md:flex w-20 bg-purple-800 h-screen flex-col items-center py-6 space-y-8 text-white">
-  <img src="https://img.icons8.com/ios-filled/50/ffffff/home.png" class="w-6 hover:scale-110 transition"/>
-  <img src="https://img.icons8.com/ios-filled/50/ffffff/task.png" class="w-6 hover:scale-110 transition"/>
-  <img src="https://img.icons8.com/ios-filled/50/ffffff/combo-chart.png" class="w-6 hover:scale-110 transition"/>
-  <img src="https://img.icons8.com/ios-filled/50/ffffff/settings.png" class="w-6 hover:scale-110 transition"/>
-</div>
+  <!-- Sidebar -->
+  <div class="hidden md:flex w-20 bg-purple-800 h-screen flex-col items-center py-6 space-y-8 text-white">
+    <img src="https://img.icons8.com/ios-filled/50/ffffff/home.png" class="w-6"/>
+    <img src="https://img.icons8.com/ios-filled/50/ffffff/task.png" class="w-6"/>
+    <img src="https://img.icons8.com/ios-filled/50/ffffff/combo-chart.png" class="w-6"/>
+    <img src="https://img.icons8.com/ios-filled/50/ffffff/settings.png" class="w-6"/>
+  </div>
 
-{% if due_today %}
-<div class="bg-blue-100 text-blue-700 p-3 rounded mb-3">
-  📅 {{ due_today|length }} tasks due today!
-</div>
-{% endif %}
+  <!-- MAIN CONTENT -->
+  <div class="flex-1 p-6">
 
-{% if overdue %}
-<div class="bg-red-100 text-red-700 p-3 rounded mb-3">
-  ⚠️ {{ overdue|length }} overdue tasks!
-</div>
-{% endif %}
-<!-- Main -->
-<div class="flex-1 p-4 md:p-6 max-w-6xl mx-auto">
+    <h2 class="text-xl font-bold mb-4">📊 Student Task Manager</h2>
 
-<!-- 🔔 Flash Messages -->
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <div class="mb-4 space-y-2">
-      {% for msg in messages[-2:] %}
-        <div class="bg-green-100 text-green-700 p-2 rounded">
-          {{ msg }}
-        </div>
-      {% endfor %}
+    <!-- TOP BAR -->
+    <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
+
+      <div class="flex gap-2">
+        <a href="/calendar" class="bg-blue-500 text-white px-4 py-2 rounded">📅 Calendar</a>
+        <button onclick="toggleDark()" class="bg-gray-800 text-white px-3 py-2 rounded">🌙</button>
+        <a href="/suggest" class="bg-purple-600 text-white px-4 py-2 rounded">🤖 AI Suggest</a>
+        <a href="/download-report" class="bg-green-600 text-white px-4 py-2 rounded">📄 Report</a>
+      </div>
+
+      <form method="GET" action="/dashboard" class="flex gap-2">
+        <input type="text" name="search" value="{{ request.args.get('search', '') }}"
+          placeholder="Search tasks..." class="border px-3 py-2 rounded w-48">
+        <button class="bg-blue-500 text-white px-3 py-2 rounded">Search</button>
+      </form>
+
+      <div class="flex items-center gap-3">
+        <span>Hello, {{ user_name }} 👋</span>
+        <a href="/logout" class="bg-red-500 text-white px-4 py-2 rounded">Logout</a>
+      </div>
+
     </div>
-  {% endif %}
-{% endwith %}
 
-<!-- Top bar -->
-<div class="flex flex-col md:flex-row justify-between gap-4 mb-6">
+    <!-- Profile -->
+    <a href="/profile" class="bg-green-600 text-white px-4 py-2 rounded">👤 Profile</a>
 
-  <a href="/calendar"
-    class="bg-blue-500 text-white px-4 py-2 rounded">
-    📅 Calendar
-  </a>
-
-  <!-- Search -->
-  <form method="GET" action="/dashboard">
-    <input type="text" name="search" placeholder="Search tasks..."
-      class="p-2 border rounded w-full md:w-64 shadow-sm">
-  </form>
-
-  <div class="flex items-center justify-between md:justify-end gap-4">
-    <p class="font-semibold">Hello, {{ user_name }} 👋</p>
-
-    <a href="/logout"
-       class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-      Logout
-    </a>
-  </div>
-
-</div>
-
-<!-- ⚠️ Overdue Alert -->
-{% if overdue %}
-<div class="bg-red-100 text-red-700 p-3 rounded mb-4">
-  ⚠️ {{ overdue|length }} overdue tasks!
-</div>
-{% endif %}
-
-<!-- 🔔 Pending Alert -->
-{% if pending > 0 %}
-<div class="bg-yellow-100 text-yellow-800 p-3 rounded mb-4">
-  🔔 You have {{ pending }} pending tasks!
-</div>
-{% endif %}
-
-<!-- Stats -->
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-
-  <div class="bg-white p-4 rounded-xl shadow text-center">
-    <p class="text-gray-500 text-sm">Total</p>
-    <h2 class="text-xl font-bold">{{ total }}</h2>
-  </div>
-
-  <div class="bg-white p-4 rounded-xl shadow text-center">
-    <p class="text-gray-500 text-sm">Completed</p>
-    <h2 class="text-green-600 text-xl font-bold">{{ completed }}</h2>
-  </div>
-
-  <div class="bg-white p-4 rounded-xl shadow text-center">
-    <p class="text-gray-500 text-sm">Pending</p>
-    <h2 class="text-yellow-500 text-xl font-bold">{{ pending }}</h2>
-  </div>
-
-  <div class="bg-white p-4 rounded-xl shadow text-center">
-    <p class="text-gray-500 text-sm">Progress</p>
-    <h2 class="text-purple-600 text-xl font-bold">{{ percent }}%</h2>
-  </div>
-
-</div>
-
-{% if percent == 100 %}
-<p class="text-green-600 font-semibold">🎉 All tasks completed!</p>
-{% elif percent > 50 %}
-<p class="text-blue-600 font-semibold">🔥 Good progress!</p>
-{% else %}
-<p class="text-gray-600">Keep going 💪</p>
-{% endif %}
-
-<!-- Filter + Sort -->
-<div class="flex flex-col md:flex-row gap-3 mb-4">
-
-  <select onchange="location = this.value" class="p-2 border rounded">
-    <option value="/dashboard">All Tasks</option>
-    <option value="/dashboard?filter=completed">Completed</option>
-    <option value="/dashboard?filter=pending">Pending</option>
-  </select>
-
-  <select onchange="location = this.value" class="p-2 border rounded">
-    <option value="/dashboard?sort=latest">Latest</option>
-    <option value="/dashboard?sort=oldest">Oldest</option>
-    <option value="/dashboard?sort=due">Due Date</option>
-  </select>
-
-</div>
-
-<!-- Add Task -->
-<form method="POST" action="/add" class="mb-6 flex flex-col md:flex-row gap-3">
-
-  <input name="title" placeholder="Task Title" required
-    class="p-3 border rounded-lg shadow-sm w-full md:w-1/4">
-
-  <input name="desc" placeholder="Description" required
-    class="p-3 border rounded-lg shadow-sm w-full md:w-1/4">
-
-  <input type="date" name="due_date"
-    class="p-3 border rounded-lg shadow-sm">
-
-  <button class="bg-purple-600 text-white px-6 rounded-lg hover:bg-purple-700">
-    Add
-  </button>
-
-</form>
-
-<!-- Tasks -->
-<h2 class="text-xl font-bold mb-4">Projects</h2>
-
-{% if tasks|length == 0 %}
-<div class="text-center mt-10">
-  <img src="https://cdn-icons-png.flaticon.com/512/4076/4076478.png"
-       class="w-32 mx-auto mb-4">
-  <p class="text-gray-500">No tasks yet. Add your first task 🚀</p>
-</div>
-{% endif %}
-
-<!-- Grid -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-
-{% for task in tasks %}
-<div class="bg-white p-5 rounded-2xl shadow-md hover:shadow-xl hover:scale-105 transition">
-
-  <h3 class="font-bold text-lg mb-1">{{ task.title }}</h3>
-
-  <p class="text-gray-500 text-sm mb-2">{{ task.description }}</p>
-
-  <p class="text-xs text-gray-400 mb-2">
-    📅 {{ task.due_date }}
-  </p>
-
-  <!-- Overdue -->
-  {% if task in overdue %}
-    <span class="text-red-500 text-xs">⚠ Overdue</span>
-  {% endif %}
-
-  <!-- Status -->
-  <div class="mt-2">
-    {% if task.status == 'Completed' %}
-      <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-sm">
-        ✔ Completed
-      </span>
-    {% else %}
-      <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-sm">
-        ⏳ Pending
-      </span>
+    <!-- ALERT -->
+    {% if due_today|length > 0 %}
+    <div class="bg-yellow-100 text-yellow-800 p-3 rounded mb-4 mt-3 animate-pulse">
+      ⚠️ You have {{ due_today|length }} task(s) due today!
+    </div>
     {% endif %}
-  </div>
 
-  <!-- Actions -->
-  <div class="flex justify-between mt-3">
+    <!-- STATS -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
 
-    <!-- Toggle -->
-    <a href="/toggle/{{ task.id }}" class="text-green-600 text-lg">✔</a>
+      <div class="bg-white p-4 rounded-xl shadow text-center">
+        <p>Total</p>
+        <h2>{{ total }}</h2>
+      </div>
 
-    <!-- Edit -->
-    <a href="/edit/{{ task.id }}" class="text-blue-500 text-lg">✏️</a>
+      <div class="bg-white p-4 rounded-xl shadow text-center">
+        <p>Completed</p>
+        <h2 class="text-green-600">{{ completed }}</h2>
+      </div>
 
-    <!-- Delete -->
-    <form action="/delete/{{ task.id }}" method="POST">
-        <button class="text-red-500 text-lg">❌</button>
+      <div class="bg-white p-4 rounded-xl shadow text-center">
+        <p>Pending</p>
+        <h2 class="text-yellow-500">{{ pending }}</h2>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl shadow text-center">
+        <p>Progress</p>
+        <h2 class="text-purple-600">{{ percent }}%</h2>
+      </div>
+
+    </div>
+
+    <!-- ADD TASK -->
+    <form method="POST" action="/add" class="mb-6 flex gap-3 flex-wrap">
+
+      <input name="title" placeholder="Task Title" required class="p-3 border rounded w-1/4">
+      <input name="desc" placeholder="Description" required class="p-3 border rounded w-1/4">
+      <input type="date" name="due_date" class="p-3 border rounded">
+
+      <!-- PRIORITY -->
+      <select name="priority" class="p-3 border rounded">
+        <option value="High">🔥 High</option>
+        <option value="Medium" selected>⚡ Medium</option>
+        <option value="Low">🌿 Low</option>
+      </select>
+
+      <button class="bg-purple-600 text-white px-6 rounded">Add</button>
+
     </form>
 
+    <!-- EMPTY -->
+    {% if tasks|length == 0 %}
+      <p class="text-gray-500">No tasks yet. Add your first task 🚀</p>
+    {% endif %}
+
+    <!-- TASKS -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    {% for task in tasks %}
+    <div class="
+      {% if task.due_date < today and task.status == 'Pending' %}
+      border-2 border-red-500 bg-red-50
+      {% endif %}
+      p-4 rounded shadow bg-white">
+
+      <h3 class="font-bold">{{ task.title }}</h3>
+      <p class="text-sm">📅 {{ task.due_date }}</p>
+
+      {% if task.status == 'Completed' %}
+      <span class="text-green-600">✔ Completed</span>
+      {% else %}
+      <span class="text-yellow-600">⏳ Pending</span>
+      {% endif %}
+
+      <!-- OVERDUE -->
+      {% if task.due_date < today and task.status == 'Pending' %}
+      <p class="text-red-600 text-sm mt-2">⚠️ Overdue Task!</p>
+      {% endif %}
+
+      <!-- PRIORITY BADGE -->
+      <select onchange="updatePriority({{ task.id }}, this.value)"
+      class="p-2 border rounded mt-2">
+
+         <option value="High" {% if task.priority == 'High' %}selected{% endif %}>🔥 High</option>
+         <option value="Medium" {% if task.priority == 'Medium' %}selected{% endif %}>⚡ Medium</option>
+         <option value="Low" {% if task.priority == 'Low' %}selected{% endif %}>🌿 Low</option>
+
+      </select>
+
+      <div class="flex justify-between mt-3">
+        <a href="/toggle/{{ task.id }}">✔</a>
+        <a href="/edit/{{ task.id }}">✏️</a>
+
+        <form action="/delete/{{ task.id }}" method="POST">
+          <button>❌</button>
+        </form>
+      </div>
+
+      <script>
+      function updatePriority(taskId, priority) {
+        fetch(`/update-priority/${taskId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ priority: priority })
+        })
+        .then(res => res.json())
+        .then(data => {
+          console.log("Updated:", data);
+        })
+        .catch(err => console.error(err));
+      }
+      </script>
+
+    </div>
+    {% endfor %}
+
+    </div>
+
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="w-80 bg-white p-6 border-l">
+    <h3 class="font-bold mb-4">Task Analysis</h3>
+    <canvas id="myChart"></canvas>
   </div>
 
 </div>
-{% endfor %}
 
-</div>
+<!-- CHART -->
+<script>
+const completed = {{ completed }};
+const pending = {{ pending }};
 
-</div>
+new Chart(document.getElementById('myChart'), {
+    type: 'bar',
+    data: {
+        labels: ['Completed', 'Pending'],
+        datasets: [{
+            label: 'Tasks',
+            data: [completed, pending],
+            backgroundColor: ['#22c55e', '#f59e0b']
+        }]
+    }
+});
+</script>
 
-<!-- Right Panel -->
-<div class="w-full md:w-80 bg-white p-6 border-l">
+<!-- DARK MODE -->
+<script>
+function toggleDark() {
+  document.body.classList.toggle("bg-gray-900");
+  document.body.classList.toggle("text-white");
 
-  <h3 class="font-bold mb-4 text-lg">Task Analysis</h3>
-
-  <canvas id="myChart"></canvas>
-
-  <script>
-  
-  const completed = {{ completed }};
-  const pending = {{ pending }};
-
-  new Chart(document.getElementById('myChart'), {
-      type: 'bar',
-      data: {
-          labels: ['Completed', 'Pending'],
-          datasets: [{
-              label: 'Tasks',
-              data: [completed, pending],
-              backgroundColor: ['#22c55e', '#f59e0b']
-          }]
-     },
-      options: {
-          responsive: true,
-          plugins: {
-              legend: { display: false }
-          }
-      }
+  document.querySelectorAll('.bg-white').forEach(el => {
+    el.classList.toggle('bg-gray-800');
   });
-  </script>
+}
+</script>
 
-</div>
-
-</div>
+<footer class="text-center text-gray-500 mt-10">
+  © 2026 Student Task Manager | Developed by Mounika
+</footer>
 
 </body>
 </html>

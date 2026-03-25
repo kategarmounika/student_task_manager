@@ -3,8 +3,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 from datetime import date
 import os
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+import io
+from flask import send_file
+from flask import jsonify
 
-# ✅ Correct Flask app initialization (for api folder)
 app = Flask(
     __name__,
     template_folder=os.path.join(os.path.dirname(__file__), '../templates'),
@@ -57,26 +61,33 @@ def home():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        password = request.form.get('password')
+
         conn = get_db()
 
-        try:
-            conn.execute(
-                "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-                (
-                    request.form['name'],
-                    request.form['email'],
-                    generate_password_hash(request.form['password'])
-                )
-            )
-            conn.commit()
-            flash("Registered successfully!")
-            return redirect('/login')
+        # 🔍 Check if email exists
+        existing_user = conn.execute(
+            "SELECT * FROM users WHERE email=?",
+            (email,)
+        ).fetchone()
 
-        except sqlite3.IntegrityError:
-            flash("Email already exists!")
-
-        finally:
+        if existing_user:
+            flash("⚠️ Email already registered!")
             conn.close()
+            return redirect('/register')
+
+        # ✅ Insert new user
+        conn.execute(
+            "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+            (name, email, generate_password_hash(password))
+        )
+        conn.commit()
+        conn.close()
+
+        flash("✅ Registered successfully!")
+        return redirect('/login')
 
     return render_template('register.html')
 
@@ -112,30 +123,11 @@ def dashboard():
     conn = get_db()
     user_id = session['user_id']
 
-    search = request.args.get("search")
-    filter_status = request.args.get("filter")
-    sort = request.args.get("sort")
+    tasks = conn.execute(
+        "SELECT * FROM tasks WHERE user_id=?",
+        (user_id,)
+    ).fetchall()
 
-    query = "SELECT * FROM tasks WHERE user_id=?"
-    params = [user_id]
-
-    if search:
-        query += " AND title LIKE ?"
-        params.append(f"%{search}%")
-
-    if filter_status == "completed":
-        query += " AND status='Completed'"
-    elif filter_status == "pending":
-        query += " AND status='Pending'"
-
-    if sort == "latest":
-        query += " ORDER BY id DESC"
-    elif sort == "oldest":
-        query += " ORDER BY id ASC"
-    elif sort == "due":
-        query += " ORDER BY due_date ASC"
-
-    tasks = conn.execute(query, tuple(params)).fetchall()
     conn.close()
 
     total = len(tasks)
@@ -144,11 +136,16 @@ def dashboard():
 
     percent = int((completed / total) * 100) if total > 0 else 0
 
-    # Notifications
     today = str(date.today())
+
     due_today = [
         t for t in tasks
         if t['due_date'] == today and t['status'] == "Pending"
+    ]
+
+    overdue_tasks = [
+        t for t in tasks
+        if t['due_date'] < today and t['status'] == "Pending"
     ]
 
     return render_template(
@@ -159,8 +156,119 @@ def dashboard():
         pending=pending,
         percent=percent,
         due_today=due_today,
-        user_name=session.get('user_name')
+        overdue_tasks=overdue_tasks,
+        user_name=session.get('user_name'),
+        today=today
     )
+
+@app.route('/suggest', methods=['GET', 'POST'])
+def suggest():
+    suggestions = []
+
+    if request.method == 'POST':
+        topic = request.form['topic']
+
+        # Simple AI-like logic
+        if "exam" in topic.lower():
+            suggestions = [
+                "📘 Revise important concepts",
+                "📝 Practice previous question papers",
+                "⏰ Create a study schedule",
+                "📊 Analyze weak topics"
+            ]
+        elif "project" in topic.lower():
+            suggestions = [
+                "💻 Complete coding module",
+                "📄 Prepare documentation",
+                "🎯 Test all features",
+                "📊 Create presentation slides"
+            ]
+        else:
+            suggestions = [
+                "📚 Study consistently",
+                "🧠 Practice coding",
+                "🎯 Set daily goals",
+                "📝 Track your progress"
+            ]
+
+    return render_template('suggest.html', suggestions=suggestions)    
+
+@app.route('/profile')
+def profile():
+    if 'user_id' not in session:
+        return redirect('/login')
+
+    conn = get_db()
+
+    user = conn.execute(
+        "SELECT name, email FROM users WHERE id=?",
+        (session['user_id'],)
+    ).fetchone()
+
+    tasks = conn.execute(
+        "SELECT * FROM tasks WHERE user_id=?",
+        (session['user_id'],)
+    ).fetchall()
+
+    conn.close()
+
+    total = len(tasks)
+    completed = len([t for t in tasks if t['status'] == 'Completed'])
+    pending = len([t for t in tasks if t['status'] == 'Pending'])
+
+    return render_template(
+        'profile.html',
+        user=user,
+        total=total,
+        completed=completed,
+        pending=pending
+    )    
+
+@app.route('/update-priority/<int:id>', methods=['POST'])
+def update_priority(id):
+    data = request.get_json()
+    priority = data.get('priority')
+
+    conn = get_db()
+
+    conn.execute(
+        "UPDATE tasks SET priority=? WHERE id=?",
+        (priority, id)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"status": "success"})
+
+@app.route('/forgot', methods=['GET', 'POST'])
+def forgot():
+    if request.method == 'POST':
+        email = request.form['email']
+        new_password = request.form['password']
+
+        conn = get_db()
+
+        user = conn.execute(
+            "SELECT * FROM users WHERE email=?",
+            (email,)
+        ).fetchone()
+
+        if user:
+            conn.execute(
+                "UPDATE users SET password=? WHERE email=?",
+                (generate_password_hash(new_password), email)
+            )
+            conn.commit()
+            conn.close()
+
+            flash("Password updated successfully!")
+            return redirect('/login')
+        else:
+            flash("Email not found!")
+
+    return render_template('forgot.html')
+
 
 # ---------------- TOGGLE STATUS ----------------
 @app.route('/toggle/<int:id>')
@@ -263,11 +371,65 @@ def calendar():
 
     return render_template('calendar.html', tasks=tasks)
 
+
+@app.route('/download-report')
+def download_report():
+    if 'user_id' not in session:
+        return redirect('/login')
+
+    conn = get_db()
+
+    tasks = conn.execute(
+        "SELECT * FROM tasks WHERE user_id=?",
+        (session['user_id'],)
+    ).fetchall()
+
+    conn.close()
+
+    buffer = io.BytesIO()
+
+    doc = SimpleDocTemplate(buffer)
+    styles = getSampleStyleSheet()
+
+    elements = []
+
+    # Title
+    elements.append(Paragraph("Student Task Report", styles['Title']))
+    elements.append(Spacer(1, 10))
+
+    # User
+    elements.append(Paragraph(f"User: {session.get('user_name')}", styles['Normal']))
+    elements.append(Spacer(1, 10))
+
+    # Summary
+    total = len(tasks)
+    completed = len([t for t in tasks if t['status'] == 'Completed'])
+    pending = len([t for t in tasks if t['status'] == 'Pending'])
+
+    elements.append(Paragraph(f"Total Tasks: {total}", styles['Normal']))
+    elements.append(Paragraph(f"Completed: {completed}", styles['Normal']))
+    elements.append(Paragraph(f"Pending: {pending}", styles['Normal']))
+    elements.append(Spacer(1, 20))
+
+    # Task list
+    for t in tasks:
+        elements.append(Paragraph(
+            f"{t['title']} - {t['status']} (Due: {t['due_date']})",
+            styles['Normal']
+        ))
+        elements.append(Spacer(1, 5))
+
+    doc.build(elements)
+
+    buffer.seek(0)
+
+    return send_file(buffer, as_attachment=True, download_name="report.pdf", mimetype='application/pdf')
+
+
 # ---------------- LOGOUT ----------------
 @app.route('/logout')
 def logout():
     session.clear()
-    flash("Logged out!")
     return redirect('/login')
 
 # ---------------- RUN ----------------

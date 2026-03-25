@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Reset Password</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="flex items-center justify-center h-screen bg-gray-100">
+
+<div class="bg-white p-8 rounded shadow w-96">
+
+<h2 class="text-xl font-bold mb-4">Reset Password</h2>
+
+<form method="POST">
+
+<input type="email" name="email" placeholder="Enter your email"
+class="w-full p-2 border mb-3" required>
+
+<input type="password" name="password" placeholder="New Password"
+class="w-full p-2 border mb-3" required>
+
+<button class="w-full bg-purple-600 text-white p-2 rounded">
+Reset Password
+</button>
+
+</form>
+
+<br>
+
+<a href="/login" class="text-blue-500">Back to Login</a>
+
+</div>
+
+</body>
+</html>
