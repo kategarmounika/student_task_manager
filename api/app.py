@@ -2,9 +2,17 @@ from flask import Flask, render_template, request, redirect, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 from datetime import date
+import os
 
-app = Flask(__name__)
+# ✅ Correct Flask app initialization (for api folder)
+app = Flask(
+    __name__,
+    template_folder=os.path.join(os.path.dirname(__file__), '../templates'),
+    static_folder=os.path.join(os.path.dirname(__file__), '../static')
+)
+
 app.secret_key = "secret123"
+
 
 # ---------------- DATABASE ----------------
 def get_db():
