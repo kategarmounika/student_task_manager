@@ -8,6 +8,8 @@ from reportlab.lib.styles import getSampleStyleSheet
 import io
 from flask import send_file
 from flask import jsonify
+import os
+DB_PATH = os.path.join(os.path.dirname(__file__), 'database.db')
 
 app = Flask(
     __name__,
@@ -20,13 +22,12 @@ app.secret_key = "secret123"
 
 # ---------------- DATABASE ----------------
 def get_db():
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
-    conn = get_db()
-
+    conn = sqlite3.connect(DB_PATH)
     conn.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,11 +40,12 @@ def init_db():
     conn.execute('''
         CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
             title TEXT,
             description TEXT,
-            status TEXT DEFAULT 'Pending',
             due_date TEXT,
-            user_id INTEGER
+            status TEXT,
+            priority TEXT
         )
     ''')
 
@@ -297,14 +299,17 @@ def toggle(id):
 def add_task():
     conn = get_db()
 
+    priority = request.form.get('priority', 'Medium')
+
     conn.execute(
-        "INSERT INTO tasks (title, description, status, due_date, user_id) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO tasks (title, description, status, due_date, user_id, priority) VALUES (?, ?, ?, ?, ?, ?)",
         (
             request.form['title'],
             request.form['desc'],
             'Pending',
             request.form['due_date'],
-            session['user_id']
+            session['user_id'],
+            priority
         )
     )
 
