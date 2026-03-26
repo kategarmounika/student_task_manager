@@ -10,7 +10,12 @@ from flask import send_file
 from flask import jsonify
 import os
 DB_PATH = os.path.join(os.path.dirname(__file__), 'database.db')
+from api.app import app
 
+# Vercel entry point
+def handler(request, context=None):
+    return app
+    
 app = Flask(
     __name__,
     template_folder=os.path.join(os.path.dirname(__file__), '../templates'),
