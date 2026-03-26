@@ -53,7 +53,9 @@ def init_db():
     conn.commit()
     conn.close()
 
-init_db()
+@app.before_request
+def setup():
+    init_db()
 
 # ---------------- HOME ----------------
 @app.route('/')
@@ -439,3 +441,6 @@ def logout():
     return redirect('/login')
 
 # ---------------- RUN ----------------
+@app.errorhandler(Exception)
+def handle_error(e):
+    return str(e), 500
