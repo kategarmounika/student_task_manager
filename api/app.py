@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, flash
+from flask import Flask, render_template, request, redirect, session, flash, send_file, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 from datetime import date
@@ -6,16 +6,13 @@ import os
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 import io
-from flask import send_file
-from flask import jsonify
-import os
+
 DB_PATH = "/tmp/database.db"
 
-
-app = Flask(__name__,
+app = Flask(
+    __name__,
     template_folder=os.path.join(os.path.dirname(__file__), "../templates"),
     static_folder=os.path.join(os.path.dirname(__file__), "../static")
-   static_folder=os.path.join(os.path.dirname(__file__), '../static')
 )
 
 app.secret_key = "secret123"
