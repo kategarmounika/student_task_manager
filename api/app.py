@@ -9,13 +9,13 @@ import io
 from flask import send_file
 from flask import jsonify
 import os
-DB_PATH = os.path.join(os.path.dirname(__file__), 'database.db')
+DB_PATH = "/tmp/database.db"
 
 
-app = Flask(
-    __name__,
-    template_folder=os.path.join(os.path.dirname(__file__), '../templates'),
-    static_folder=os.path.join(os.path.dirname(__file__), '../static')
+app = Flask(__name__,
+    template_folder=os.path.join(os.path.dirname(__file__), "../templates"),
+    static_folder=os.path.join(os.path.dirname(__file__), "../static")
+   static_folder=os.path.join(os.path.dirname(__file__), '../static')
 )
 
 app.secret_key = "secret123"
@@ -439,6 +439,3 @@ def logout():
     return redirect('/login')
 
 # ---------------- RUN ----------------
-if __name__ == "__main__":
-    app.run(debug=True)
-    
